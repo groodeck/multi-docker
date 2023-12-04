@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t agrodecki/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run agrodecki/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t agrodecki/multi-client ./client
+  - docker build -t agrodecki/multi-nginx ./nginx
+  - docker build -t agrodecki/multi-server ./server
+  - docker build -t agrodecki/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push agrodecki/multi-client
+  - docker push agrodecki/multi-nginx
+  - docker push agrodecki/multi-server
+  - docker push agrodecki/multi-worker
